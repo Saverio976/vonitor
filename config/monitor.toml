@@ -1,1 +1,9 @@
 # Config for the daemon monitor
+
+file_watcher = [
+    { uniq_id = "Show log", path = "/tmp/log.txt", interval_seconds = 60 }
+]
+
+command_watcher = [
+    { uniq_id = "Show ls", exe = "ls", args = "", interval_seconds = 60 }
+]

@@ -1,18 +1,19 @@
 import veb
-import x.templating.dtm
+
+fn build_user_login(title string) string {
+	return $tmpl('user_login.html')
+}
 
 @['/user/login']
 pub fn (mut app App) user_login(mut ctx Context) veb.Result {
-	mut tmpl_var := map[string]dtm.DtmMultiTypeMap{}
-	tmpl_var['title'] = "vonitor"
-	html_content := app.dtmi.expand('user_login.html', placeholders: &tmpl_var)
-	return ctx.html(html_content)
+	return ctx.html(build_user_login('vonitor'))
+}
+
+fn build_user_register(title string) string {
+	return $tmpl('user_register.html')
 }
 
 @['/user/register']
 pub fn (mut app App) user_register(mut ctx Context) veb.Result {
-	mut tmpl_var := map[string]dtm.DtmMultiTypeMap{}
-	tmpl_var['title'] = "vonitor"
-	html_content := app.dtmi.expand('user_register.html', placeholders: &tmpl_var)
-	return ctx.html(html_content)
+	return ctx.html(build_user_register('vonitor'))
 }
