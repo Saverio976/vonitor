@@ -23,8 +23,35 @@ pub fn (mut app App) find_user_by_token(token string) ?User {
 	return user.first()
 }
 
+pub fn (mut app App) create_user(name string, password string) ! {
+	salt_bytes := rand.bytes(32) or {
+		eprintln(err.msg())
+		return error('Internal error (code 03)')
+	}
+	salt := salt_bytes.hex()
+	password_hash := hash_password(password, salt) or {
+		eprintln(err.msg())
+		return error('Internal error (code 04)')
+	}
+	new_user := User{
+		name:          name
+		password_hash: password_hash
+		salt:          salt
+	}
+	sql app.db {
+		insert new_user into User
+	} or {
+		eprintln(err.msg())
+		return error("Can't create user")
+	}
+}
+
 @['/api/user/register'; post]
 pub fn (mut app App) register_user(mut ctx Context, name string, password string) veb.Result {
+	if !app.enable_register {
+		ctx.error('Register is not enabled')
+		return ctx.redirect('/')
+	}
 	mut name_val := name
 	mut password_val := password
 	if name_val == '' || password == '' {
@@ -35,27 +62,8 @@ pub fn (mut app App) register_user(mut ctx Context, name string, password string
 		name_val = connection_param.name
 		password_val = connection_param.password
 	}
-	salt_bytes := rand.bytes(32) or {
-		eprintln(err.msg())
-		ctx.error('Internal error (code 03)')
-		return ctx.redirect('/')
-	}
-	salt := salt_bytes.hex()
-	password_hash := hash_password(password_val, salt) or {
-		eprintln(err.msg())
-		ctx.error('Internal error (code 04)')
-		return ctx.redirect('/')
-	}
-	new_user := User{
-		name:          name_val
-		password_hash: password_hash
-		salt:          salt
-	}
-	sql app.db {
-		insert new_user into User
-	} or {
-		eprintln(err.msg())
-		ctx.error("Can't create user")
+	app.create_user(name_val, password_val) or {
+		ctx.error(err.msg())
 		return ctx.redirect('/')
 	}
 	if x := app.find_user_by_name(name) {

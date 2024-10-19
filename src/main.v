@@ -17,9 +17,16 @@ struct Config {
 	web_config_file    string @[long: wconfig; xdoc: 'config file for the web interface']
 }
 
+struct UserConfigFile {
+	name string
+	password_env_var string
+}
+
 struct ConfigFile {
 mut:
 	postgres_uri string
+	users_create []UserConfigFile
+	enable_register bool
 }
 
 pub struct User {
@@ -37,6 +44,8 @@ pub mut:
 
 pub struct App {
 	veb.StaticHandler
+pub:
+	enable_register bool
 pub mut:
 	db     pg.DB
 	auth   auth.Auth[pg.DB]
@@ -49,6 +58,14 @@ fn new_config_file(config_path string) !ConfigFile {
 	if postgres_uri != '' {
 		config.postgres_uri = postgres_uri
 	}
+	for item in doc.value('users').array() {
+		user := item.reflect[UserConfigFile]()
+		if user.name != '' && user.password_env_var != '' {
+			config.users_create << user
+		}
+	}
+	enable_register := doc.value('enable_register').bool()
+	config.enable_register = enable_register
 	return config
 }
 
@@ -66,11 +83,25 @@ fn main() {
 	monitor_path := os.join_path(data_folder_path, 'monitor.db')
 	mut app := &App{
 		db:     db
+		enable_register: config_file.enable_register
 	}
 	app.auth = auth.new(app.db)
 	sql app.db {
 		create table User
 	}!
+	for user in config_file.users_create {
+		res := sql app.db {
+			select from User where name == user.name limit 1
+		} or {
+			eprintln(err.msg())
+			continue
+		}
+		if res.len == 0 {
+			app.create_user(user.name, os.getenv(user.password_env_var)) or {
+				panic(err.msg())
+			}
+		}
+	}
 	app.mount_static_folder_at('static', '/static') or { panic('Failed to find static folder') }
 	spawn monitor.monitor(config.daemon_config_file, monitor_path)
 	veb.run[App, Context](mut app, 8080)

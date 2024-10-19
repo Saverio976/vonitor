@@ -15,5 +15,9 @@ fn build_user_register(title string) string {
 
 @['/user/register']
 pub fn (mut app App) user_register(mut ctx Context) veb.Result {
-	return ctx.html(build_user_register('vonitor'))
+	if app.enable_register {
+		return ctx.html(build_user_register('vonitor'))
+	}
+	ctx.error('Register is disabled')
+	return ctx.redirect('/')
 }

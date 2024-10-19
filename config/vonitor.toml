@@ -1,3 +1,11 @@
 # Config for the web interface
 
 postgres_uri = ""
+
+# if the user does not exist => created
+# if the user does exist => nothing is done (the password can't be changed this way)
+users = [
+    { name = "ok", password_env_var = "MONITOR_DB_OK_PASSWORD" }
+]
+
+enable_register = false
