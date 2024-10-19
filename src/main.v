@@ -74,12 +74,10 @@ fn main() {
 		println('The following flags could not be mapped to any fields on the struct: ${no_matches}')
 	}
 	config_file := new_config_file(config.web_config_file)!
-	data_folder_path := os.join_path(os.dir(os.executable()), '.data')
 	mut db := pg.connect_with_conninfo(config_file.postgres_uri) or { panic(err) }
 	defer {
 		db.close()
 	}
-	monitor_path := os.join_path(data_folder_path, 'monitor.db')
 	mut app := &App{
 		db:     db
 		enable_register: config_file.enable_register
@@ -101,6 +99,6 @@ fn main() {
 			}
 		}
 	}
-	spawn monitor.monitor(config.daemon_config_file, monitor_path)
+	spawn monitor.monitor(config.daemon_config_file, config_file.postgres_uri)
 	veb.run[App, Context](mut app, 8080)
 }
