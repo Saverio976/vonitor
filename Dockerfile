@@ -5,6 +5,7 @@ RUN apt-get update -y \
         make \
         libatomic1 \
         git \
+        libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 RUN git clone https://github.com/vlang/v.git /vlang
