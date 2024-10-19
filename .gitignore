@@ -1,6 +1,7 @@
 # Binaries for programs and plugins
 main
 vonitor
+vonitor-dev
 *.exe
 *.exe~
 *.so

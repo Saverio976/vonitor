@@ -1,0 +1,7 @@
+/.git
+/.data
+/.config
+/.editorconfig
+/.gitattributes
+/.gitignore
+/Dockerfile
