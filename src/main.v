@@ -1,8 +1,9 @@
 module main
 
+import toml
 import os
 import veb
-import db.sqlite
+import db.pg
 import veb.auth
 import monitor
 import flag
@@ -14,6 +15,11 @@ import flag
 struct Config {
 	daemon_config_file string @[long: dconfig; xdoc: 'config file for the monitor daemon']
 	web_config_file    string @[long: wconfig; xdoc: 'config file for the web interface']
+}
+
+struct ConfigFile {
+mut:
+	postgres_uri string
 }
 
 pub struct User {
@@ -32,9 +38,18 @@ pub mut:
 pub struct App {
 	veb.StaticHandler
 pub mut:
-	db     sqlite.DB
-	db_mon sqlite.DB
-	auth   auth.Auth[sqlite.DB]
+	db     pg.DB
+	auth   auth.Auth[pg.DB]
+}
+
+fn new_config_file(config_path string) !ConfigFile {
+	doc := toml.parse_file(config_path)!
+	mut config := ConfigFile{}
+	postgres_uri := doc.value('postgres_uri').string()
+	if postgres_uri != '' {
+		config.postgres_uri = postgres_uri
+	}
+	return config
 }
 
 fn main() {
@@ -42,19 +57,15 @@ fn main() {
 	if no_matches.len > 0 {
 		println('The following flags could not be mapped to any fields on the struct: ${no_matches}')
 	}
+	config_file := new_config_file(config.web_config_file)!
 	data_folder_path := os.join_path(os.dir(os.executable()), '.data')
-	mut db := sqlite.connect(os.join_path(data_folder_path, 'vonitor.db')) or { panic(err) }
+	mut db := pg.connect_with_conninfo(config_file.postgres_uri) or { panic(err) }
 	defer {
-		db.close() or {}
+		db.close()
 	}
 	monitor_path := os.join_path(data_folder_path, 'monitor.db')
-	mut db_mon := sqlite.connect(monitor_path) or { panic(err) }
-	defer {
-		db_mon.close() or {}
-	}
 	mut app := &App{
 		db:     db
-		db_mon: db_mon
 	}
 	app.auth = auth.new(app.db)
 	sql app.db {

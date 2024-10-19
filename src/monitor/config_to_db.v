@@ -1,8 +1,8 @@
 module monitor
 
-import db.sqlite
+import db.pg
 
-fn config_to_db_file_watcher(config ConfigFile, mut db sqlite.DB) []FileWatcher {
+fn config_to_db_file_watcher(config ConfigFile, mut db pg.DB) []FileWatcher {
 	mut all_file_watcher := sql db {
 		select from FileWatcher
 	} or { [] }
@@ -58,7 +58,7 @@ fn config_to_db_file_watcher(config ConfigFile, mut db sqlite.DB) []FileWatcher 
 	return result
 }
 
-fn config_to_db_command_watcher(config ConfigFile, mut db sqlite.DB) []CommandWatcher {
+fn config_to_db_command_watcher(config ConfigFile, mut db pg.DB) []CommandWatcher {
 	mut all_command_watcher := sql db {
 		select from CommandWatcher
 	} or { [] }
@@ -116,6 +116,7 @@ fn config_to_db_command_watcher(config ConfigFile, mut db sqlite.DB) []CommandWa
 }
 
 fn config_to_db(config ConfigFile, mut mon Monitor) {
+	mon.process_watcher = config.process_watcher
 	command_watcher := config_to_db_command_watcher(config, mut mon.db)
 	mon.command_watcher << command_watcher
 	file_watcher := config_to_db_file_watcher(config, mut mon.db)

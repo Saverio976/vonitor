@@ -1,6 +1,6 @@
 module monitor
 
-import db.sqlite
+import db.pg
 import os
 
 struct ConfigFileWatcher {
@@ -35,7 +35,7 @@ fn (mut item FileWatcher) from_config(conf ConfigFileWatcher) {
 	item.interval_seconds = conf.interval_seconds
 }
 
-fn (mut item FileWatcher) watch(mut db sqlite.DB) {
+fn (mut item FileWatcher) watch(mut db pg.DB) {
 	content := os.read_file(item.path) or {
 		eprintln(err.msg())
 		return

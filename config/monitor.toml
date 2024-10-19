@@ -7,3 +7,5 @@ file_watcher = [
 command_watcher = [
     { uniq_id = "Show ls", exe = "ls", args = "", interval_seconds = 60 }
 ]
+
+process_watcher = { interval_seconds = 60, proc_path = "/proc/" }

@@ -1,21 +1,23 @@
 module monitor
 
-import db.sqlite
+import db.pg
 import math
 import time
 
 struct Monitor {
 pub mut:
-	db                   sqlite.DB
+	db                   pg.DB
 	command_watcher      []CommandWatcher
 	command_watcher_time map[string]int
 	file_watcher         []FileWatcher
 	file_watcher_time    map[string]int
+	process_watcher ConfigProcessWatcher
+	process_watcher_time int
 }
 
-fn Monitor.new(config_file string, internal_db_path string) !Monitor {
+fn Monitor.new(config_file string, postgres_uri string) !Monitor {
 	config := parse_config(config_file) or { return error('${@LOCATION} :: ${err.msg()}') }
-	mut db := sqlite.connect(internal_db_path) or { return error('${@LOCATION} :: ${err.msg()}') }
+	mut db := pg.connect_with_conninfo(postgres_uri) or { return error('${@LOCATION} :: ${err.msg()}') }
 	mut mon := Monitor{
 		db: db
 	}
@@ -24,7 +26,7 @@ fn Monitor.new(config_file string, internal_db_path string) !Monitor {
 		create table CommandWatcher
 		create table FileWatcher
 	} or {
-		mon.db.close() or {}
+		mon.db.close()
 		return error('${@LOCATION} :: ${err.msg()}')
 	}
 	config_to_db(config, mut mon)
@@ -34,6 +36,7 @@ fn Monitor.new(config_file string, internal_db_path string) !Monitor {
 	for item in mon.file_watcher {
 		mon.file_watcher_time[item.uniq_id] = 0
 	}
+	mon.process_watcher_time = 0
 	return mon
 }
 
@@ -52,6 +55,7 @@ fn (mut mon Monitor) watch(delta int) {
 			mon.file_watcher_time[item.uniq_id] = item.interval_seconds
 		}
 	}
+	ProcessWatcher.watch(mon.process_watcher.proc_path, mut mon.db)
 }
 
 fn (mut mon Monitor) wait() int {
@@ -60,6 +64,14 @@ fn (mut mon Monitor) wait() int {
 		if min_wait_second > value {
 			min_wait_second = value
 		}
+	}
+	for _, value in mon.file_watcher_time {
+		if min_wait_second > value {
+			min_wait_second = value
+		}
+	}
+	if min_wait_second > mon.process_watcher_time {
+		min_wait_second = mon.process_watcher_time
 	}
 	time.sleep(time.second * min_wait_second)
 	return min_wait_second
@@ -72,7 +84,7 @@ pub fn monitor(config_file string, internal_db_path string) {
 		return
 	}
 	defer {
-		mon.db.close() or {}
+		mon.db.close()
 	}
 	for {
 		delta := mon.wait()

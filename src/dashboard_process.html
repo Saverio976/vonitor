@@ -45,19 +45,11 @@
     <body>
         <p>@user.name</p>
 
-        <div class="tab">
-            @for item in files
-            <button class="tablinks" onclick="openFile(event, '@item.id')">@item.uniq_id</button>
-            @end
-        </div>
-
-        @for item in files
-        <div id="@item.id" class="tabcontent">
-            <h3>@item.path</h3>
-            <button onclick="scrollToEnd('@item.id')">Scroll to end</button>
-            <div id="div@item.id" class="textcontent">
-                <pre class="textcontentpre">@item.content</pre>
-            </div>
+        @for item in processes
+        <div class="tabcontent">
+            <h4>@item.pid - @item.program</h4>
+            <p>@item.user: <pre>@item.command</pre></p>
+            <p>Memory: <pre>@item.memory B</pre> | Threads: <pre>@item.threads</pre> | CPU time</p>
         </div>
         @end
 

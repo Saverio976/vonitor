@@ -6,6 +6,7 @@ struct ConfigFile {
 mut:
 	file_watcher    []ConfigFileWatcher
 	command_watcher []ConfigCommandWatcher
+	process_watcher ConfigProcessWatcher
 }
 
 fn parse_config(config_path string) !ConfigFile {
@@ -22,6 +23,10 @@ fn parse_config(config_path string) !ConfigFile {
 		if c.exe != '' && c.interval_seconds != 0 {
 			config.command_watcher << c
 		}
+	}
+	process_watcher := doc.value('process_watcher').reflect[ConfigProcessWatcher]()
+	if process_watcher.interval_seconds != 0 && process_watcher.proc_path != '' {
+		config.process_watcher = process_watcher
 	}
 	println('${config}')
 	return config

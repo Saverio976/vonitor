@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
     <head>
-        <title>@title - Dashboard File</title>
+        <title>@title - Dashboard Command</title>
         <style>
             div.tab {
                 overflow: auto;
@@ -46,14 +46,14 @@
         <p>@user.name</p>
 
         <div class="tab">
-            @for item in files
-            <button class="tablinks" onclick="openFile(event, '@item.id')">@item.uniq_id</button>
+            @for item in commands
+            <button class="tablinks" onclick="openCommand(event, '@item.id')">@item.uniq_id</button>
             @end
         </div>
 
-        @for item in files
+        @for item in commands
         <div id="@item.id" class="tabcontent">
-            <h3>@item.path</h3>
+            <h3><pre>@item.exe @item.args</pre></h3>
             <button onclick="scrollToEnd('@item.id')">Scroll to end</button>
             <div id="div@item.id" class="textcontent">
                 <pre class="textcontentpre">@item.content</pre>
@@ -62,7 +62,7 @@
         @end
 
         <script>
-            function openFile(evt, fileId) {
+            function openCommand(evt, fileId) {
                 var i, tabcontent, tablinks;
                 tabcontent = document.getElementsByClassName("tabcontent");
                 for (i = 0; i < tabcontent.length; i++) {

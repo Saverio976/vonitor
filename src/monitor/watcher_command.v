@@ -1,6 +1,6 @@
 module monitor
 
-import db.sqlite
+import db.pg
 import os
 import time
 
@@ -39,10 +39,10 @@ fn (mut item CommandWatcher) from_config(conf ConfigCommandWatcher) {
 	item.interval_seconds = conf.interval_seconds
 }
 
-fn (mut item CommandWatcher) watch(mut db sqlite.DB) {
+fn (mut item CommandWatcher) watch(mut db pg.DB) {
 	command := '${item.exe} ${item.args}'
 	res := os.execute(command)
-	item.content += '\n\n${time.now()}${command}\n'
+	item.content += '\n\n---\n${time.now()} :: ${command}\n'
 	item.content += res.output
 	sql db {
 		update CommandWatcher set content = item.content where uniq_id == item.uniq_id
