@@ -43,7 +43,6 @@ pub mut:
 }
 
 pub struct App {
-	veb.StaticHandler
 pub:
 	enable_register bool
 pub mut:
@@ -102,7 +101,6 @@ fn main() {
 			}
 		}
 	}
-	app.mount_static_folder_at('static', '/static') or { panic('Failed to find static folder') }
 	spawn monitor.monitor(config.daemon_config_file, monitor_path)
 	veb.run[App, Context](mut app, 8080)
 }
