@@ -69,6 +69,7 @@ fn new_config_file(config_path string) !ConfigFile {
 }
 
 fn main() {
+	eprintln('------------------ VONITOR -----------------------')
 	config, no_matches := flag.to_struct[Config](os.args, skip: 1)!
 	if no_matches.len > 0 {
 		println('The following flags could not be mapped to any fields on the struct: ${no_matches}')
@@ -99,6 +100,7 @@ fn main() {
 			}
 		}
 	}
+	eprintln('${config}\n${config_file}')
 	spawn monitor.monitor(config.daemon_config_file, config_file.postgres_uri)
 	veb.run[App, Context](mut app, 8080)
 }
