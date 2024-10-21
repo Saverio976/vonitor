@@ -75,7 +75,10 @@ fn main() {
 		println('The following flags could not be mapped to any fields on the struct: ${no_matches}')
 	}
 	config_file := new_config_file(config.web_config_file)!
-	mut db := pg.connect_with_conninfo(config_file.postgres_uri) or { panic(err) }
+	mut db := pg.connect_with_conninfo(config_file.postgres_uri) or {
+		eprintln('While connecting to pg in main: ${err.msg()}')
+		os.exit(1)
+	}
 	defer {
 		db.close()
 	}
@@ -96,7 +99,8 @@ fn main() {
 		}
 		if res.len == 0 {
 			app.create_user(user.name, os.getenv(user.password_env_var)) or {
-				panic(err.msg())
+				eprintln('While creating users specified in config: ${err.msg()}')
+				os.exit(1)
 			}
 		}
 	}
